@@ -1,7 +1,10 @@
 package eztix.orderservice.repository;
 
-import eztix.orderservice.model.Orders;
+import eztix.orderservice.model.PaymentOrder;
 import org.springframework.data.repository.CrudRepository;
 
-public interface OrderRepository extends CrudRepository<Orders,Long>{
+import java.util.stream.Stream;
+
+public interface OrderRepository extends CrudRepository<PaymentOrder,Long>{
+    Stream<PaymentOrder> findByCustomerId(String customerId);
 }

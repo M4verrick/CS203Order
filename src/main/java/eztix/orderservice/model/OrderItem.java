@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 
 @Getter
 @Setter
@@ -27,7 +27,7 @@ public class OrderItem {
 
     @NotNull
     @Column(name = "ticket_type")
-    private String ticket_type;
+    private String ticketType;
 
     @NotNull
     @Column(name = "quantity")
@@ -35,12 +35,20 @@ public class OrderItem {
 
     @NotNull
     @Column(name = "price")
-    private BigDecimal price;
+    private Double price;
+
+    @NotNull
+    @Column(name = "start_time")
+    private OffsetDateTime startTime;
+
+    @NotNull
+    @Column(name = "end_time")
+    private OffsetDateTime endTime;
 
     @JsonBackReference
     @ManyToOne
     @NotNull
-    @JoinColumn(name = "order_id")
-    private Orders order;
+    @JoinColumn(name = "payment_order_id")
+    private PaymentOrder paymentOrder;
 
 }

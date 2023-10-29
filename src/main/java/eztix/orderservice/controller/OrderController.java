@@ -2,29 +2,37 @@ package eztix.orderservice.controller;
 
 import eztix.orderservice.dto.OrderDTO;
 
-import eztix.orderservice.model.Orders;
+import eztix.orderservice.dto.OrderListingDTO;
+import eztix.orderservice.model.PaymentOrder;
 import eztix.orderservice.service.OrderService;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-@RestController
-public class OrderController {
-    private final OrderService orderService;
+import java.util.List;
 
-    public OrderController(OrderService orderService){
-        this.orderService = orderService;
+@RestController
+@AllArgsConstructor
+public class OrderController {
+
+    private final OrderService orderService;
+    @GetMapping("/api/v1/order")
+    public ResponseEntity<List<OrderListingDTO>> getAllOrders(Authentication authentication){
+        return ResponseEntity.status(HttpStatus.OK).
+                body(orderService.getAllOrders(authentication.getName()));
     }
 
     // Get Order by id
     @GetMapping("/api/v1/order/{orderId}")
-    public ResponseEntity<Orders> getOrderById(@PathVariable Long orderId){
+    public ResponseEntity<PaymentOrder> getOrderById(@PathVariable Long orderId){
         return ResponseEntity.status(HttpStatus.OK).
                 body(orderService.getOrderById(orderId));
     }
     // Add a new Order
     @PostMapping("api/v1/order")
-    public ResponseEntity<Orders> addOrder(@RequestBody OrderDTO orderDTO){
+    public ResponseEntity<PaymentOrder> addOrder(@RequestBody OrderDTO orderDTO){
         return ResponseEntity.status(HttpStatus.OK).
                 body(orderService.addNewOrder(orderDTO));
     }

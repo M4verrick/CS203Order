@@ -10,6 +10,7 @@ import eztix.orderservice.model.OrderItem;
 import eztix.orderservice.repository.OrderRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -20,8 +21,9 @@ import java.util.stream.Stream;
 public class OrderService {
     private final OrderRepository orderRepository;
 
+    @Transactional
     public List<OrderListingDTO> getAllOrders(String customerId) {
-        Stream<PaymentOrder> orderStream = orderRepository.findByCustomerId(customerId);
+        Stream<PaymentOrder> orderStream = orderRepository.findByCustomerIdOrderByPaymentDateTime(customerId);
 
         return orderStream.map(order -> {
             final OffsetDateTime[] latest = {OffsetDateTime.MIN};
@@ -37,7 +39,7 @@ public class OrderService {
                     .bannerURL(order.getEventBannerURL())
                     .status(latest[0].isAfter(OffsetDateTime.now()) ? "recurring" : "past")
                     .build();
-        }).toList();
+        }).sorted(((o1, o2) -> o2.getStatus().compareTo(o1.getStatus()))).toList();
     }
 
     public PaymentOrder getOrderById(Long orderId){

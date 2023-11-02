@@ -6,5 +6,5 @@ import org.springframework.data.repository.CrudRepository;
 import java.util.stream.Stream;
 
 public interface OrderRepository extends CrudRepository<PaymentOrder,Long>{
-    Stream<PaymentOrder> findByCustomerId(String customerId);
+    Stream<PaymentOrder> findByCustomerIdOrderByPaymentDateTime(String customerId);
 }

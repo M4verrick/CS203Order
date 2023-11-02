@@ -15,9 +15,11 @@ import java.util.List;
 
 @RestController
 @AllArgsConstructor
+@CrossOrigin
 public class OrderController {
 
     private final OrderService orderService;
+
     @GetMapping("/api/v1/order")
     public ResponseEntity<List<OrderListingDTO>> getAllOrders(Authentication authentication){
         return ResponseEntity.status(HttpStatus.OK).
@@ -30,12 +32,14 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.OK).
                 body(orderService.getOrderById(orderId));
     }
+
     // Add a new Order
     @PostMapping("api/v1/order")
     public ResponseEntity<PaymentOrder> addOrder(@RequestBody OrderDTO orderDTO){
         return ResponseEntity.status(HttpStatus.OK).
                 body(orderService.addNewOrder(orderDTO));
     }
+
     // Delete an order
     @DeleteMapping("api/v1/order/{orderId}")
     public ResponseEntity<String> deleteOrderById(@PathVariable Long orderId){

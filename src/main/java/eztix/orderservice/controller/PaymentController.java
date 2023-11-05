@@ -1,25 +1,35 @@
 package eztix.orderservice.controller;
 
+import com.nimbusds.jose.shaded.gson.JsonSyntaxException;
 import com.stripe.Stripe;
+import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Customer;
-import com.stripe.model.Product;
+import com.stripe.model.Event;
+import com.stripe.model.LineItemCollection;
 import com.stripe.model.checkout.Session;
+import com.stripe.net.HttpHeaders;
+import com.stripe.net.Webhook;
 import com.stripe.param.checkout.SessionCreateParams;
-import com.stripe.param.checkout.SessionCreateParams.LineItem.PriceData;
-import eztix.orderservice.dto.ProductDAO;
-import eztix.orderservice.dto.RequestDTO;
+import com.stripe.param.checkout.SessionListLineItemsParams;
+import com.stripe.param.checkout.SessionRetrieveParams;
+import eztix.orderservice.dto.CheckoutDTO;
+import eztix.orderservice.dto.ProductDTO;
 import eztix.orderservice.pojo.CustomerUtil;
+import eztix.orderservice.service.OrderService;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
+
+import com.stripe.net.ApiResource;
+
+import java.math.BigDecimal;
 
 @RestController
 @CrossOrigin
 public class PaymentController {
 
+    OrderService orderService;
     String STRIPE_API_KEY = System.getenv().get("STRIPE_API_KEY");
 
 
@@ -29,7 +39,7 @@ public class PaymentController {
     }
 
     @PostMapping("/api/v1/checkout/hosted")
-    String hostedCheckout(@RequestBody RequestDTO requestDTO, Authentication authentication, JwtAuthenticationToken token) throws StripeException {
+    public String hostedCheckout(@RequestBody CheckoutDTO checkoutDTO, Authentication authentication, JwtAuthenticationToken token) throws StripeException {
 
         Stripe.apiKey = STRIPE_API_KEY;
         String clientBaseURL = System.getenv().get("CLIENT_BASE_URL");
@@ -37,29 +47,26 @@ public class PaymentController {
         Customer customer = CustomerUtil.findOrCreateCustomer((String) token.getTokenAttributes().get("email"), authentication.getName());
 
         SessionCreateParams.Builder paramsBuilder =
-                    SessionCreateParams.builder()
-                            .setMode(SessionCreateParams.Mode.PAYMENT)
-                            .setCustomer(customer.getId())
-                            .setSuccessUrl(clientBaseURL + "/success?session_id={CHECKOUT_SESSION_ID}")
-                            .setCancelUrl(clientBaseURL + "/failure");
+                SessionCreateParams.builder()
+                        .setMode(SessionCreateParams.Mode.PAYMENT)
+                        .setCustomer(customer.getId())
+                        .setSuccessUrl(clientBaseURL + "/success?session_id={CHECKOUT_SESSION_ID}")
+                        .setCancelUrl(clientBaseURL + "/failure");
 
-            for (Product product : requestDTO.getItems()) {
-                paramsBuilder.addLineItem(
-                        SessionCreateParams.LineItem.builder()
-                                .setQuantity(1L)
-                                .setPriceData(
-                                        PriceData.builder()
-                                                .setProductData(
-                                                        PriceData.ProductData.builder()
-                                                                .putMetadata("app_id", product.getId())
-                                                                .setName(product.getName())
-                                                                .build()
-                                                )
-                                                .setCurrency(ProductDAO.getProduct(product.getId()).getDefaultPriceObject().getCurrency())
-                                                .setUnitAmountDecimal(ProductDAO.getProduct(product.getId()).getDefaultPriceObject().getUnitAmountDecimal())
-                                                .build())
-                                .build());
-            }
+        for (ProductDTO product : checkoutDTO.getProducts()) {
+            paramsBuilder.addLineItem(
+                    SessionCreateParams.LineItem.builder()
+                            .setQuantity(product.getQuantity())
+                            .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
+                                    .setUnitAmount(product.getUnitPrice())
+                                    .setCurrency("SGD")
+                                    .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                            .setName(checkoutDTO.getEventTitle() + " " + product.getTicketType() + " " + product.getDateTime())
+                                            .addImage(checkoutDTO.getBannerURL())
+                                            .build())
+                                    .build())
+                            .build());
+        }
 
         Session session = Session.create(paramsBuilder.build());
 
@@ -67,5 +74,48 @@ public class PaymentController {
     }
 
 
+    @PostMapping("/api/v1/stripe/webhook")
+    public Object stripeWebhook(@RequestBody String payload, @RequestHeader("Stripe-Signature") String sigHeader) throws StripeException {
 
+        Stripe.apiKey = STRIPE_API_KEY;
+
+        Event event = null;
+
+        try {
+            event = Webhook.constructEvent(payload, sigHeader, "whsec_ba709742ae840a3fb41f06a6d4cf5fd56be9e186c2d625e590000adce5c8e97d");
+        } catch (JsonSyntaxException e) {
+            // Invalid payload
+            e.printStackTrace();
+            return "";
+        } catch (SignatureVerificationException e) {
+            // Invalid signature
+            e.printStackTrace();
+            return "";
+        }
+
+        System.out.println(event.getType());
+        if ("checkout.session.completed".equals(event.getType())) {
+
+            Session sessionEvent = (Session) event.getDataObjectDeserializer().getObject().get();
+
+
+            SessionRetrieveParams params =
+                    SessionRetrieveParams.builder()
+                            .addExpand("line_items")
+                            .build();
+
+            Session session = Session.retrieve(sessionEvent.getId(), params, null);
+
+            SessionListLineItemsParams listLineItemsParams =
+                    SessionListLineItemsParams.builder()
+                            .build();
+
+            // Retrieve the session. If you require line items in the response, you may include them by expanding line_items.
+            LineItemCollection lineItems = session.listLineItems(listLineItemsParams);
+            // Fulfill the purchase...
+
+            System.out.println(lineItems.toString());
+        }
+        return null;
+    }
 }

@@ -70,6 +70,14 @@ public class PaymentOrder {
     @Column(name = "event_location")
     private String eventLocation;
 
+    @NotNull
+    @Column(name = "event_start_time")
+    private String eventStartTime;
+
+    @NotNull
+    @Column(name = "event_end_time")
+    private String eventEndTime;
+
     @JsonManagedReference
     @OneToMany(mappedBy = "paymentOrder",
             orphanRemoval = true,

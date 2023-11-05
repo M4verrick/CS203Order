@@ -45,7 +45,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.PUT, "/api/v1/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/**").authenticated()
 
-                        .requestMatchers(HttpMethod.POST, "/api/v1/**").hasRole("admin")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/**").hasAnyRole("user", "admin")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/**").hasRole("admin")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/**").hasRole("admin")
 
@@ -57,7 +57,8 @@ public class SecurityConfiguration {
                     Collection<String> roles = realmAccess.get("roles");
                     var grantedAuthorities = roles.stream()
                             .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                            .collect(Collectors.toList());
+                            .toList();
+
                     return new JwtAuthenticationToken(jwt, grantedAuthorities);
 
                 }))));

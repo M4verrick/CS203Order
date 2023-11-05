@@ -34,6 +34,12 @@ public class OrderController {
     }
 
     // Add a new Order
+//    @PostMapping("api/v1/order")
+//    public ResponseEntity<PaymentOrder> addOrder(@RequestBody OrderDTO orderDTO){
+//        return ResponseEntity.status(HttpStatus.OK).
+//                body(orderService.addNewOrder(orderDTO));
+//    }
+
     @PostMapping("api/v1/order")
     public ResponseEntity<PaymentOrder> addOrder(@RequestBody OrderDTO orderDTO){
         return ResponseEntity.status(HttpStatus.OK).

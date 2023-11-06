@@ -112,7 +112,6 @@ public class PaymentController {
 
         Session session = Session.create(paramsBuilder.build());
 
-        System.out.println(session.toString());
         return session.getUrl();
     }
 

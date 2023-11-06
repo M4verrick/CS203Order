@@ -13,6 +13,7 @@ import java.time.ZonedDateTime;
 @RestControllerAdvice
 public class DefaultExceptionHandler extends ResponseEntityExceptionHandler {
 
+    // handle the ResourceNotFoundException by returning a NOT_FOUND response
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiException> handleException(ResourceNotFoundException e,
                                                         HttpServletRequest request) {
@@ -26,6 +27,7 @@ public class DefaultExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(apiException, HttpStatus.NOT_FOUND);
     }
 
+    // handle the RequestValidationException by returning a BAD_REQUEST response
     @ExceptionHandler(RequestValidationException.class)
     public ResponseEntity<ApiException> handleException(RequestValidationException e,
                                                         HttpServletRequest request) {
@@ -39,6 +41,7 @@ public class DefaultExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(apiException, HttpStatus.BAD_REQUEST);
     }
 
+    // handle generic exceptions by returning an INTERNAL_SERVER_ERROR response
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiException> handleException(Exception e,
                                                         HttpServletRequest request) {

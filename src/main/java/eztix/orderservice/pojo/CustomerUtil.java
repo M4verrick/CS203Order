@@ -7,6 +7,7 @@ import com.stripe.param.CustomerCreateParams;
 import com.stripe.param.CustomerSearchParams;
 
 public class CustomerUtil {
+    // Get a customer by email
     public static Customer findCustomerByEmail(String email) throws StripeException {
         CustomerSearchParams params =
                 CustomerSearchParams
@@ -16,7 +17,7 @@ public class CustomerUtil {
 
         CustomerSearchResult result = Customer.search(params);
 
-        return result.getData().size() > 0 ? result.getData().get(0) : null;
+        return !result.getData().isEmpty() ? result.getData().get(0) : null;
     }
 
     public static Customer findOrCreateCustomer(String email, String name) throws StripeException {

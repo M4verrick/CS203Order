@@ -20,20 +20,21 @@ public class OrderController {
 
     private final OrderService orderService;
 
+    // retrieve all orders
     @GetMapping("/api/v1/order")
     public ResponseEntity<List<OrderListingDTO>> getAllOrders(Authentication authentication){
         return ResponseEntity.status(HttpStatus.OK).
                 body(orderService.getAllOrders(authentication.getName()));
     }
 
-    // Get Order by id
+    // retrieve a PaymentOrder by id
     @GetMapping("/api/v1/order/{orderId}")
     public ResponseEntity<PaymentOrder> getOrderById(@PathVariable Long orderId){
         return ResponseEntity.status(HttpStatus.OK).
                 body(orderService.getOrderById(orderId));
     }
 
-    // Add a new Order
+    // add a new PaymentOrder
     @PostMapping("api/v1/order")
     public ResponseEntity<PaymentOrder> addOrder(@RequestBody OrderDTO orderDTO){
         return ResponseEntity.status(HttpStatus.OK).

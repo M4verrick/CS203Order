@@ -3,7 +3,6 @@ package eztix.orderservice.unit;
 import eztix.orderservice.dto.OrderDTO;
 import eztix.orderservice.exception.RequestValidationException;
 import eztix.orderservice.exception.ResourceNotFoundException;
-import eztix.orderservice.model.Orders;
 import eztix.orderservice.model.PaymentOrder;
 import eztix.orderservice.repository.OrderRepository;
 import eztix.orderservice.service.OrderService;
@@ -12,12 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.util.Optional;
-
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
@@ -29,6 +23,7 @@ public class OrderServiceTest {
     @InjectMocks
     private OrderService testOrderService;
 
+    // if payment order ID not in database throws resource not found exception
     @Test
     public void givenIdNotInDB_whenRetrieveByOrderId_throwResourceNotFoundException(){
 
@@ -41,6 +36,7 @@ public class OrderServiceTest {
                 .hasMessageContaining("order with id %d does not exist", 1L);
     }
 
+    // if id exists then no error thrown when retrieve payment order by id
     @Test
     public void givenOrderExist_whenRetrieve_thenSuccessful(){
         // given
@@ -54,6 +50,8 @@ public class OrderServiceTest {
         // then
         assertThat(retrievedOrder).isEqualTo(order);
     }
+
+    // if customer id is null will throw request validation exception
     @Test
     public void givenNullCustomerId_whenAdd_throwRequestValidationException(){
         // given
@@ -67,11 +65,12 @@ public class OrderServiceTest {
                 .hasMessageContaining("customer id cannot be null");
     }
 
+    // if purchase request id is null throw request validation exception
     @Test
     public void givenNullPurchaseRequestId_whenAdd_throwRequestValidationException(){
         // given
         OrderDTO orderDTO = new OrderDTO();
-        orderDTO.setCustomer_id(1L);
+        orderDTO.setCustomer_id("1L");
         orderDTO.setPurchase_request_id(null);
 
         // when

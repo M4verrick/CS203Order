@@ -60,8 +60,8 @@ public class PaymentController {
                         .setMode(SessionCreateParams.Mode.PAYMENT)
                         .setCustomer(customer.getId())
                         .putMetadata("eventId", String.valueOf(checkoutDTO.getEventId()))
-                        .setSuccessUrl(checkoutDTO.getSuccessUrl())
-                        .setCancelUrl(checkoutDTO.getFailureUrl());
+                        .setSuccessUrl(checkoutDTO.getSuccessURL())
+                        .setCancelUrl(checkoutDTO.getFailureURL());
 
         double total = 0;
 

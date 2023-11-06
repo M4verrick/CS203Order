@@ -21,14 +21,26 @@ import org.springframework.web.bind.annotation.*;
 public class PaymentController {
 
     String STRIPE_API_KEY = System.getenv().get("STRIPE_API_KEY");
-
-    // test endpoint for JWT authentication
+    /**
+     * Handle a test endpoint for JWT authentication.
+     *
+     * @param token The JwtAuthenticationToken representing the authenticated user.
+     * @return An object, which, in this case, is the JwtAuthenticationToken itself.
+     */
     @GetMapping("/api/v1/test")
     Object test(JwtAuthenticationToken token) {
         return token;
     }
 
-    // endpoint for hosted checkout using Stripe
+    /**
+     * Handle a hosted checkout for Stripe payments.
+     *
+     * @param requestDTO      The request data containing information about the products in the order.
+     * @param authentication  The user's authentication information.
+     * @param token           The JWT authentication token.
+     * @return The URL for the hosted checkout session.
+     * @throws StripeException if there's an issue with the Stripe API.
+     */
     @PostMapping("/api/v1/checkout/hosted")
     String hostedCheckout(@RequestBody RequestDTO requestDTO, Authentication authentication, JwtAuthenticationToken token) throws StripeException {
         // set stripe API key

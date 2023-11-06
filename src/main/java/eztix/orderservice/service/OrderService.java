@@ -84,6 +84,8 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
+
+
     // delete order by ID; if invalid ID throws request validation exception
     public void deleteById(Long id){
         if (id == null){
@@ -92,7 +94,7 @@ public class OrderService {
         orderRepository.deleteById(id);
     }
 
-    // given a list of orderItemDTO, return a list of OrderItem
+    // given a list of orderItemDTO, return a list of OrderItem objects
     public List<OrderItem> processOrderItem(List<OrderItemDTO> orderItemDTO){
         List<OrderItem> orderItems = new ArrayList<>();
         for (OrderItemDTO o : orderItemDTO){

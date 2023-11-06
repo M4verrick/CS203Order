@@ -1,5 +1,7 @@
 package eztix.orderservice.service;
 
+import com.stripe.model.LineItem;
+import com.stripe.model.LineItemCollection;
 import eztix.orderservice.dto.OrderDTO;
 import eztix.orderservice.dto.OrderItemDTO;
 import eztix.orderservice.dto.OrderListingDTO;
@@ -47,33 +49,43 @@ public class OrderService {
                     new ResourceNotFoundException(String.format("order with id %d does not exist", orderId)));
     }
 
-    public PaymentOrder addNewOrder(OrderDTO orderDTO){
+    public PaymentOrder getOrderByPurchaseRequestId(Long id) {
+        return orderRepository.findByPurchaseRequestId(id).orElseThrow(() ->
+                new ResourceNotFoundException(String.format("order with purchase request id %d does not exist", id)));
+    }
+
+    public void addNewOrder(LineItemCollection lineItems){
         // check valid customer ID
-        if (orderDTO.getCustomer_id() == null){
-            throw new RequestValidationException("customer id cannot be null");
-        }
-        // check purchase request ID
-        if (orderDTO.getPurchase_request_id() == null){
-            throw new RequestValidationException("purchase request id cannot be null");
+//        if (orderDTO.getCustomer_id() == null){
+//            throw new RequestValidationException("customer id cannot be null");
+//        }
+//        // check purchase request ID
+//        if (orderDTO.getPurchase_request_id() == null){
+//            throw new RequestValidationException("purchase request id cannot be null");
+//        }
+//
+//        PaymentOrder order = PaymentOrder.builder().
+//                customerId(orderDTO.getCustomer_id())
+//                .purchaseRequestId(orderDTO.getPurchase_request_id())
+//                .eventId(orderDTO.getEvent_id())
+//                .paymentDateTime(orderDTO.getPayment_date_time())
+//                .totalAmount(orderDTO.getTotal_amount())
+//                .eventName(orderDTO.getEvent_name())
+//                .eventCategory(orderDTO.getEvent_category())
+//                .eventArtist(orderDTO.getEvent_artist())
+//                .eventBannerURL(orderDTO.getEvent_banner_url())
+//                .eventSeatMapURL(orderDTO.getEvent_seat_map_url())
+//                .eventLocation(orderDTO.getEvent_location())
+//                .build();
+//
+//        List<OrderItem> orderItems = processOrderItem(orderDTO.getOrderItems());
+//        order.setOrderItems(orderItems);
+//        return orderRepository.save(order);
+        System.out.println("YAY");
+        for (LineItem item: lineItems.getData()) {
+            System.out.printf(item.toString());
         }
 
-        PaymentOrder order = PaymentOrder.builder().
-                customerId(orderDTO.getCustomer_id())
-                .purchaseRequestId(orderDTO.getPurchase_request_id())
-                .eventId(orderDTO.getEvent_id())
-                .paymentDateTime(orderDTO.getPayment_date_time())
-                .totalAmount(orderDTO.getTotal_amount())
-                .eventName(orderDTO.getEvent_name())
-                .eventCategory(orderDTO.getEvent_category())
-                .eventArtist(orderDTO.getEvent_artist())
-                .eventBannerURL(orderDTO.getEvent_banner_url())
-                .eventSeatMapURL(orderDTO.getEvent_seat_map_url())
-                .eventLocation(orderDTO.getEvent_location())
-                .build();
-
-        List<OrderItem> orderItems = processOrderItem(orderDTO.getOrderItems());
-        order.setOrderItems(orderItems);
-        return orderRepository.save(order);
     }
 
     public void deleteById(Long id){

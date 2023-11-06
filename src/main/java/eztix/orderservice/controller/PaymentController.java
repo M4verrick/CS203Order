@@ -17,6 +17,8 @@ import eztix.orderservice.dto.CheckoutDTO;
 import eztix.orderservice.dto.ProductDTO;
 import eztix.orderservice.pojo.CustomerUtil;
 import eztix.orderservice.service.OrderService;
+import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
@@ -24,13 +26,20 @@ import org.springframework.web.bind.annotation.*;
 import com.stripe.net.ApiResource;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @CrossOrigin
 public class PaymentController {
 
-    OrderService orderService;
-    String STRIPE_API_KEY = System.getenv().get("STRIPE_API_KEY");
+    private final OrderService orderService;
+    private final String STRIPE_API_KEY = System.getenv().get("STRIPE_API_KEY");
+
+    @Autowired
+    public PaymentController(OrderService orderService) {
+        this.orderService = orderService;
+    }
 
 
     @GetMapping("/api/v1/test")
@@ -50,26 +59,63 @@ public class PaymentController {
                 SessionCreateParams.builder()
                         .setMode(SessionCreateParams.Mode.PAYMENT)
                         .setCustomer(customer.getId())
-                        .setSuccessUrl(clientBaseURL + "/success?session_id={CHECKOUT_SESSION_ID}")
-                        .setCancelUrl(clientBaseURL + "/failure");
+                        .putMetadata("eventId", String.valueOf(checkoutDTO.getEventId()))
+                        .setSuccessUrl(checkoutDTO.getSuccessUrl())
+                        .setCancelUrl(checkoutDTO.getFailureUrl());
+
+        double total = 0;
 
         for (ProductDTO product : checkoutDTO.getProducts()) {
+
+            total += product.getUnitPrice() * product.getQuantity();
             paramsBuilder.addLineItem(
                     SessionCreateParams.LineItem.builder()
                             .setQuantity(product.getQuantity())
                             .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
+
                                     .setUnitAmount(product.getUnitPrice())
                                     .setCurrency("SGD")
                                     .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
                                             .setName(checkoutDTO.getEventTitle() + " " + product.getTicketType() + " " + product.getDateTime())
                                             .addImage(checkoutDTO.getBannerURL())
+                                            .putMetadata("ticketId", String.valueOf(product.getTicketId()))
                                             .build())
                                     .build())
                             .build());
         }
 
+        paramsBuilder.addLineItem(
+                SessionCreateParams.LineItem.builder()
+                        .setQuantity(1L)
+                        .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
+                                .setUnitAmount((long) (total / 10))
+                                .setCurrency("SGD")
+                                .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                        .setName("Service Fee")
+                                        .addImage(checkoutDTO.getBannerURL())
+                                        .putMetadata("ticketId", "-1")
+                                        .build())
+                                .build())
+                        .build());
+
+        paramsBuilder.addLineItem(
+                SessionCreateParams.LineItem.builder()
+                        .setQuantity(1L)
+                        .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
+                                .setUnitAmount(10L)
+                                .setCurrency("SGD")
+                                .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                        .setName("Facility Fee")
+                                        .addImage(checkoutDTO.getBannerURL())
+                                        .putMetadata("ticketId", "-1")
+                                        .build())
+                                .build())
+                        .build());
+
+
         Session session = Session.create(paramsBuilder.build());
 
+        System.out.println(session.toString());
         return session.getUrl();
     }
 
@@ -95,7 +141,6 @@ public class PaymentController {
 
         System.out.println(event.getType());
         if ("checkout.session.completed".equals(event.getType())) {
-
             Session sessionEvent = (Session) event.getDataObjectDeserializer().getObject().get();
 
 
@@ -112,9 +157,7 @@ public class PaymentController {
 
             // Retrieve the session. If you require line items in the response, you may include them by expanding line_items.
             LineItemCollection lineItems = session.listLineItems(listLineItemsParams);
-            // Fulfill the purchase...
-
-            System.out.println(lineItems.toString());
+            orderService.addNewOrder(lineItems);
         }
         return null;
     }

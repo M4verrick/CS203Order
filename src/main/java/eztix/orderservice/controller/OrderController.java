@@ -33,6 +33,12 @@ public class OrderController {
                 body(orderService.getOrderById(orderId));
     }
 
+    @GetMapping("/api/v1/purchase-request/{prId}/order")
+    public ResponseEntity<PaymentOrder> getOrderByPurchaseRequestId(@PathVariable Long prID){
+        return ResponseEntity.status(HttpStatus.OK).
+                body(orderService.getOrderById(prID));
+    }
+
     // Add a new Order
 //    @PostMapping("api/v1/order")
 //    public ResponseEntity<PaymentOrder> addOrder(@RequestBody OrderDTO orderDTO){
@@ -40,11 +46,11 @@ public class OrderController {
 //                body(orderService.addNewOrder(orderDTO));
 //    }
 
-    @PostMapping("api/v1/order")
-    public ResponseEntity<PaymentOrder> addOrder(@RequestBody OrderDTO orderDTO){
-        return ResponseEntity.status(HttpStatus.OK).
-                body(orderService.addNewOrder(orderDTO));
-    }
+//    @PostMapping("api/v1/order")
+//    public ResponseEntity<PaymentOrder> addOrder(@RequestBody OrderDTO orderDTO){
+//        return ResponseEntity.status(HttpStatus.OK).
+//                body(orderService.addNewOrder(orderDTO));
+//    }
 
     // Delete an order
     @DeleteMapping("api/v1/order/{orderId}")

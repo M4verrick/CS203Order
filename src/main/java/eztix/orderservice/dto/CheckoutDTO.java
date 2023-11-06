@@ -7,8 +7,10 @@ public class CheckoutDTO {
 
     ProductDTO[] products;
 
+    private Long eventId;
+    private Long purchaseRequestId;
     private String eventTitle;
     private String bannerURL;
-    //private String successUrl;
-    //private String cancelUrl;
+    private String successUrl;
+    private String failureUrl;
 }

@@ -11,6 +11,6 @@ public class CheckoutDTO {
     private Long purchaseRequestId;
     private String eventTitle;
     private String bannerURL;
-    private String successUrl;
-    private String failureUrl;
+    private String successURL;
+    private String failureURL;
 }

@@ -2,19 +2,20 @@ package eztix.orderservice.service;
 
 import com.stripe.model.LineItem;
 import com.stripe.model.LineItemCollection;
-import eztix.orderservice.dto.OrderDTO;
-import eztix.orderservice.dto.OrderItemDTO;
-import eztix.orderservice.dto.OrderListingDTO;
+import eztix.orderservice.dto.*;
 import eztix.orderservice.exception.RequestValidationException;
 import eztix.orderservice.exception.ResourceNotFoundException;
 import eztix.orderservice.model.PaymentOrder;
 import eztix.orderservice.model.OrderItem;
 import eztix.orderservice.repository.OrderRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -54,7 +55,8 @@ public class OrderService {
                 new ResourceNotFoundException(String.format("order with purchase request id %d does not exist", id)));
     }
 
-    public void addNewOrder(LineItemCollection lineItems){
+    public void addNewOrder(LineItemCollection lineItems, String customerId,
+                            Long eventId, Long purchaseRequestId, Long total){
         // check valid customer ID
 //        if (orderDTO.getCustomer_id() == null){
 //            throw new RequestValidationException("customer id cannot be null");
@@ -82,9 +84,51 @@ public class OrderService {
 //        order.setOrderItems(orderItems);
 //        return orderRepository.save(order);
         System.out.println("YAY");
+        OffsetDateTime now = OffsetDateTime.now(ZoneId.of("Singapore"));
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        ResponseEntity<EventDTO> responseEntity = restTemplate.getForEntity("http://localhost:8080/api/v1/event/1", EventDTO.class);
+        EventDTO event = responseEntity.getBody();
+
+
+        PaymentOrder paymentOrder = PaymentOrder.builder()
+                .customerId(customerId)
+                .eventId(eventId)
+                .purchaseRequestId(purchaseRequestId)
+                .paymentDateTime(now)
+                .totalAmount(total/100)
+                .eventName(event.getName())
+                .eventCategory(event.getCategory())
+                .eventArtist(event.getArtist())
+                .eventBannerURL(event.getBannerURL())
+                .eventSeatMapURL(event.getSeatMapURL())
+                .eventLocation(event.getLocation())
+                .eventStartTime(event.getStart_datetime())
+                .eventEndTime(event.getEnd_datetime())
+                .build();
+
+        ArrayList<OrderItem> orderItems = new ArrayList<>();
+
+        int i = 0;
         for (LineItem item: lineItems.getData()) {
-            System.out.printf(item.toString());
+
+            ResponseEntity<TicketTypeDTO> responseEntityItem = restTemplate.getForEntity("http://localhost:8080/api/v1/ticket-type/1/date", TicketTypeDTO.class);
+            TicketTypeDTO ticketType = responseEntityItem.getBody();
+
+            orderItems.add(OrderItem.builder()
+                            .ticketType(ticketType.getTicketType())
+                            .quantity(item.getQuantity())
+                            .price(item.getPrice().getUnitAmount()/100)
+                            .startTime(ticketType.getStartDateTime())
+                            .endTime(ticketType.getEndDateTime())
+                            .paymentOrder(paymentOrder)
+                            .build());
         }
+
+        paymentOrder.setOrderItems(orderItems);
+
+        orderRepository.save(paymentOrder);
 
     }
 

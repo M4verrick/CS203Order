@@ -15,8 +15,8 @@ import java.time.OffsetDateTime;
 @Data
 public class OrderItemDTO {
     private String ticket_type;
-    private Integer quantity;
-    private Double price;
+    private Long quantity;
+    private Long price;
     private OffsetDateTime start_time;
     private OffsetDateTime end_time;
 }

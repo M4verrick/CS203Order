@@ -31,11 +31,11 @@ public class OrderItem {
 
     @NotNull
     @Column(name = "quantity")
-    private Integer quantity;
+    private Long quantity;
 
     @NotNull
     @Column(name = "price")
-    private Double price;
+    private Long price;
 
     @NotNull
     @Column(name = "start_time")

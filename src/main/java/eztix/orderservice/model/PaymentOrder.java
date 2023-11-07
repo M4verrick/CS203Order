@@ -44,7 +44,7 @@ public class PaymentOrder {
 
     @NotNull
     @Column(name = "total_amount")
-    private Double totalAmount;
+    private Long totalAmount;
 
     @NotNull
     @Column(name = "event_name")
@@ -72,11 +72,11 @@ public class PaymentOrder {
 
     @NotNull
     @Column(name = "event_start_time")
-    private String eventStartTime;
+    private OffsetDateTime eventStartTime;
 
     @NotNull
     @Column(name = "event_end_time")
-    private String eventEndTime;
+    private OffsetDateTime eventEndTime;
 
     @JsonManagedReference
     @OneToMany(mappedBy = "paymentOrder",

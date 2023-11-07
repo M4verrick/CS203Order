@@ -65,7 +65,7 @@ public class OrderService {
         RestTemplate restTemplate = new RestTemplate();
 
 
-        ResponseEntity<EventDTO> responseEntity = restTemplate.getForEntity(String.format("ttp://localhost:8080/api/v1/event/%d", eventId), EventDTO.class);
+        ResponseEntity<EventDTO> responseEntity = restTemplate.getForEntity(String.format("http://localhost:8080/api/v1/event/%d", eventId), EventDTO.class);
         EventDTO event = responseEntity.getBody();
 
 

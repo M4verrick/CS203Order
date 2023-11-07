@@ -34,9 +34,9 @@ public class OrderController {
     }
 
     @GetMapping("/api/v1/order/purchase-request/{prId}")
-    public ResponseEntity<PaymentOrder> getOrderByPurchaseRequestId(@PathVariable Long prID){
+    public ResponseEntity<PaymentOrder> getOrderByPurchaseRequestId(@PathVariable Long prId){
         return ResponseEntity.status(HttpStatus.OK).
-                body(orderService.getOrderByPurchaseRequestId(prID));
+                body(orderService.getOrderByPurchaseRequestId(prId));
     }
 
     // Add a new Order

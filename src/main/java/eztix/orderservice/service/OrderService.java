@@ -10,6 +10,7 @@ import eztix.orderservice.model.PaymentOrder;
 import eztix.orderservice.model.OrderItem;
 import eztix.orderservice.repository.OrderRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -113,7 +114,13 @@ public class OrderService {
             i++;
 
         }
+
         paymentOrder.setOrderItems(orderItems);
+
+        restTemplate = new RestTemplate();
+        String url = String.format("http://localhost:8080//api/v1/purchase-request/%d/paid", purchaseRequestId);
+        restTemplate.getForEntity(url, String.class);
+
 
         orderRepository.save(paymentOrder);
 

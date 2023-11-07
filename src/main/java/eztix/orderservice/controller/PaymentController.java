@@ -8,7 +8,6 @@ import com.stripe.model.Customer;
 import com.stripe.model.Event;
 import com.stripe.model.LineItemCollection;
 import com.stripe.model.checkout.Session;
-import com.stripe.net.HttpHeaders;
 import com.stripe.net.Webhook;
 import com.stripe.param.checkout.SessionCreateParams;
 import com.stripe.param.checkout.SessionListLineItemsParams;
@@ -17,17 +16,12 @@ import eztix.orderservice.dto.CheckoutDTO;
 import eztix.orderservice.dto.ProductDTO;
 import eztix.orderservice.pojo.CustomerUtil;
 import eztix.orderservice.service.OrderService;
-import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
-import com.stripe.net.ApiResource;
-
-import java.math.BigDecimal;
 import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @CrossOrigin
@@ -41,31 +35,27 @@ public class PaymentController {
         this.orderService = orderService;
     }
 
-
-    @GetMapping("/api/v1/test")
-    Object test(JwtAuthenticationToken token) {
-        return token;
-    }
-
     @PostMapping("/api/v1/checkout/hosted")
     public String hostedCheckout(@RequestBody CheckoutDTO checkoutDTO, Authentication authentication, JwtAuthenticationToken token) throws StripeException {
 
         Stripe.apiKey = STRIPE_API_KEY;
-        String clientBaseURL = System.getenv().get("CLIENT_BASE_URL");
 
         Customer customer = CustomerUtil.findOrCreateCustomer((String) token.getTokenAttributes().get("email"), authentication.getName());
+        HashMap<String, String> map = new HashMap<>();
+        map.put("eventId", String.valueOf(checkoutDTO.getEventId()));
+        map.put("purchaseRequestId", String.valueOf(checkoutDTO.getPurchaseRequestId()));
 
         SessionCreateParams.Builder paramsBuilder =
                 SessionCreateParams.builder()
                         .setMode(SessionCreateParams.Mode.PAYMENT)
                         .setCustomer(customer.getId())
-                        .putMetadata("eventId", String.valueOf(checkoutDTO.getEventId()))
                         .setSuccessUrl(checkoutDTO.getSuccessURL())
                         .setCancelUrl(checkoutDTO.getFailureURL());
 
         double total = 0;
-
+        int i = 0;
         for (ProductDTO product : checkoutDTO.getProducts()) {
+            map.put("ticketId" + i, String.valueOf(product.getTicketId()));
 
             total += product.getUnitPrice() * product.getQuantity();
             paramsBuilder.addLineItem(
@@ -81,6 +71,7 @@ public class PaymentController {
                                             .build())
                                     .build())
                             .build());
+            i++;
         }
 
         paramsBuilder.addLineItem(
@@ -91,7 +82,7 @@ public class PaymentController {
                                 .setCurrency("SGD")
                                 .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
                                         .setName("Service Fee")
-                                        .putMetadata("ticketId", "-1")
+                                        .addImage("https://cs203.s3.ap-southeast-1.amazonaws.com/asset/service.png")
                                         .build())
                                 .build())
                         .build());
@@ -104,11 +95,12 @@ public class PaymentController {
                                 .setCurrency("SGD")
                                 .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
                                         .setName("Facility Fee")
-                                        .putMetadata("ticketId", "-1")
+                                        .addImage("https://cs203.s3.ap-southeast-1.amazonaws.com/asset/facility.png")
                                         .build())
                                 .build())
                         .build());
 
+        paramsBuilder.putAllMetadata(map);
 
         Session session = Session.create(paramsBuilder.build());
 
@@ -151,9 +143,13 @@ public class PaymentController {
                     SessionListLineItemsParams.builder()
                             .build();
 
+            System.out.println(sessionEvent);
             // Retrieve the session. If you require line items in the response, you may include them by expanding line_items.
             LineItemCollection lineItems = session.listLineItems(listLineItemsParams);
-            orderService.addNewOrder(lineItems);
+            orderService.addNewOrder(lineItems, sessionEvent.getCustomerDetails().getName(),
+                    Long.valueOf(sessionEvent.getMetadata().get("eventId")),
+                    Long.valueOf(sessionEvent.getMetadata().get("purchaseRequestId")),
+                    session.getAmountTotal());
         }
         return null;
     }

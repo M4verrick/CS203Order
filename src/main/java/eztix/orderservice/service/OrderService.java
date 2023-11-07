@@ -2,6 +2,7 @@ package eztix.orderservice.service;
 
 import com.stripe.model.LineItem;
 import com.stripe.model.LineItemCollection;
+import com.stripe.model.checkout.Session;
 import eztix.orderservice.dto.*;
 import eztix.orderservice.exception.RequestValidationException;
 import eztix.orderservice.exception.ResourceNotFoundException;
@@ -56,33 +57,8 @@ public class OrderService {
     }
 
     public void addNewOrder(LineItemCollection lineItems, String customerId,
-                            Long eventId, Long purchaseRequestId, Long total){
-        // check valid customer ID
-//        if (orderDTO.getCustomer_id() == null){
-//            throw new RequestValidationException("customer id cannot be null");
-//        }
-//        // check purchase request ID
-//        if (orderDTO.getPurchase_request_id() == null){
-//            throw new RequestValidationException("purchase request id cannot be null");
-//        }
-//
-//        PaymentOrder order = PaymentOrder.builder().
-//                customerId(orderDTO.getCustomer_id())
-//                .purchaseRequestId(orderDTO.getPurchase_request_id())
-//                .eventId(orderDTO.getEvent_id())
-//                .paymentDateTime(orderDTO.getPayment_date_time())
-//                .totalAmount(orderDTO.getTotal_amount())
-//                .eventName(orderDTO.getEvent_name())
-//                .eventCategory(orderDTO.getEvent_category())
-//                .eventArtist(orderDTO.getEvent_artist())
-//                .eventBannerURL(orderDTO.getEvent_banner_url())
-//                .eventSeatMapURL(orderDTO.getEvent_seat_map_url())
-//                .eventLocation(orderDTO.getEvent_location())
-//                .build();
-//
-//        List<OrderItem> orderItems = processOrderItem(orderDTO.getOrderItems());
-//        order.setOrderItems(orderItems);
-//        return orderRepository.save(order);
+                            Long eventId, Long purchaseRequestId, Long total, Session session){
+
         System.out.println("YAY");
         OffsetDateTime now = OffsetDateTime.now(ZoneId.of("Singapore"));
 
@@ -113,22 +89,33 @@ public class OrderService {
         int i = 0;
         for (LineItem item: lineItems.getData()) {
 
-            ResponseEntity<TicketTypeDTO> responseEntityItem = restTemplate.getForEntity("http://localhost:8080/api/v1/ticket-type/1/date", TicketTypeDTO.class);
+            if (item.getDescription().equals("Facility Fee") || item.getDescription().equals("Service Fee")) {
+                continue;
+            }
+            System.out.println(item);
+
+            Long ticketId = Long.valueOf(session.getMetadata().get(String.format("ticketId%d", i)));
+
+            ResponseEntity<TicketTypeDTO> responseEntityItem = restTemplate.getForEntity(String.format("http://localhost:8080/api/v1/ticket-type/%d/date", ticketId), TicketTypeDTO.class);
             TicketTypeDTO ticketType = responseEntityItem.getBody();
 
-            orderItems.add(OrderItem.builder()
-                            .ticketType(ticketType.getTicketType())
-                            .quantity(item.getQuantity())
-                            .price(item.getPrice().getUnitAmount()/100)
-                            .startTime(ticketType.getStartDateTime())
-                            .endTime(ticketType.getEndDateTime())
-                            .paymentOrder(paymentOrder)
-                            .build());
-        }
+            System.out.println(ticketType);
 
+            orderItems.add(OrderItem.builder()
+                    .ticketType(ticketType.getTicketType())
+                    .quantity(item.getQuantity())
+                    .price(item.getPrice().getUnitAmount() / 100)
+                    .startTime(ticketType.getStartDateTime())
+                    .endTime(ticketType.getEndDateTime())
+                    .paymentOrder(paymentOrder)
+                    .build());
+            i++;
+
+        }
         paymentOrder.setOrderItems(orderItems);
 
         orderRepository.save(paymentOrder);
+
 
     }
 

@@ -143,13 +143,13 @@ public class PaymentController {
                     SessionListLineItemsParams.builder()
                             .build();
 
-            System.out.println(sessionEvent);
             // Retrieve the session. If you require line items in the response, you may include them by expanding line_items.
             LineItemCollection lineItems = session.listLineItems(listLineItemsParams);
             orderService.addNewOrder(lineItems, sessionEvent.getCustomerDetails().getName(),
                     Long.valueOf(sessionEvent.getMetadata().get("eventId")),
                     Long.valueOf(sessionEvent.getMetadata().get("purchaseRequestId")),
-                    session.getAmountTotal());
+                    session.getAmountTotal(),
+                    sessionEvent);
         }
         return null;
     }

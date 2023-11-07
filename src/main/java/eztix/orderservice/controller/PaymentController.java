@@ -30,7 +30,7 @@ public class PaymentController {
     private final OrderService orderService;
     private final String STRIPE_API_KEY = System.getenv().get("STRIPE_API_KEY");
 
-    private final String STRIPE_WEB_HOOK_KEY = System.getenv().get("STRIPE_WEBHOOK_KEY");
+    private final String STRIPE_WEBHOOK_KEY = System.getenv().get("STRIPE_WEBHOOK_KEY");
 
     @Autowired
     public PaymentController(OrderService orderService) {
@@ -118,7 +118,7 @@ public class PaymentController {
         Event event = null;
 
         try {
-            event = Webhook.constructEvent(payload, sigHeader, STRIPE_WEB_HOOK_KEY);
+            event = Webhook.constructEvent(payload, sigHeader, STRIPE_WEBHOOK_KEY);
         } catch (JsonSyntaxException e) {
             // Invalid payload
             e.printStackTrace();

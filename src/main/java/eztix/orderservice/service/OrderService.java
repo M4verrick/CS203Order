@@ -117,9 +117,9 @@ public class OrderService {
 
         paymentOrder.setOrderItems(orderItems);
 
-        restTemplate = new RestTemplate();
-        String url = String.format("http://localhost:8080//api/v1/purchase-request/%d/paid", purchaseRequestId);
-        restTemplate.getForEntity(url, String.class);
+//        restTemplate = new RestTemplate();
+//        String url = String.format("http://localhost:8080//api/v1/purchase-request/%d/paid", purchaseRequestId);
+//        restTemplate.getForEntity(url, String.class);
 
 
         orderRepository.save(paymentOrder);
